@@ -70,7 +70,7 @@ async def iniciar_e_pedir_primeira_pergunta(message, context: ContextTypes.DEFAU
 
     async with httpx.AsyncClient() as client:
         try:
-            caminho_perguntas_API = f"{API_BASE_URL}/vaga/{vaga_id}/entrevista/perguntas"
+            caminho_perguntas_API = f"{API_BASE_URL}/job-posting/{vaga_id}/interview/questions"
             response = await client.get(
                 caminho_perguntas_API,
                 timeout=10.0,
@@ -138,7 +138,7 @@ async def processar_resposta(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     async with httpx.AsyncClient() as client:
         try:
-            caminho_das_resposta = f"{API_BASE_URL}/vaga/{vaga_id}/entrevista/resposta"
+            caminho_das_resposta = f"{API_BASE_URL}/job-posting/{vaga_id}/interview/answers"
             response = await client.post(
                 caminho_das_resposta,
                 json=payload_final,
