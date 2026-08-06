@@ -1,0 +1,16 @@
+{
+  "perguntas": [
+    {
+      "id": 1,
+      "texto": "PERGUNTA 1"
+    },
+    {
+      "id": 2,
+      "texto": "PERGUNTA 2"
+    },
+    {
+      "id": 3,
+      "texto": "PERGUNTA 3"
+    }
+  ]
+}
