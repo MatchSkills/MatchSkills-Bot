@@ -1,0 +1,21 @@
+{
+  "candidato_id": "67",
+  "vaga_id": "123321098890",
+  "respostas": [
+    {
+      "pergunta_id": 1,
+      "pergunta": "PERGUNTA 1",
+      "resposta": "CLARAMENTE RESPOSTA 1"
+    },
+    {
+      "pergunta_id": 2,
+      "pergunta": "PERGUNTA 2",
+      "resposta": "Assim... RESPOSTA 2"
+    },
+    {
+      "pergunta_id": 3,
+      "pergunta": "PERGUNTA 3",
+      "resposta": "Olha... fico meio encabulado de falar... mas RESPOSTA 3"
+    }
+  ]
+}
