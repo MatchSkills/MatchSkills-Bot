@@ -1,5 +1,7 @@
 import logging
 import httpx
+import jwt
+import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -11,10 +13,37 @@ from telegram.ext import (
     filters,
 )
 
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
 TELEGRAM_TOKEN = "S3GR3D0_D3_35T4D0"
 API_BASE_URL = "http://localhost:67"# Quero ver sair SIX da manhã e só voltar SEVEN da noite capinando lote
+VERIFICADOR_SECRETO = "definitivamenteNãoÉOVerificador"
+
 
 AGUARDANDO_CONFIRMACAO, EM_ENTREVISTA = range(2)
+
+
+def gerar_jwt(vaga_id: str, candidato_id: str) -> str:
+    """Vou tentar gerar um JWT assinado no proprio bot, 
+    com um tempo limite pra n virar bagunça"""
+    payload = {
+        "iss": "MatchSkillsAmigoBot",
+        "vaga_id": str(vaga_id),
+        "candidato_id": str(candidato_id),
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
+    }
+    return jwt.encode(payload, VERIFICADOR_SECRETO, algorithm="HS256")
+
+def obter_headers(vaga_id: str, candidato_id: str) -> dict:
+    """Monta os cabeçalhos"""
+    token = gerar_jwt(vaga_id, candidato_id)
+    return {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -63,12 +92,14 @@ async def tratar_decisao(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def iniciar_e_pedir_primeira_pergunta(message, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Busca a lista completa de perguntas na API e exibe a primeira."""
     vaga_id = context.user_data.get("vaga_id")
+    candidato_id = message.chat.id #pega o do chat msm
 
     await message.reply_text("Carregando suas perguntas, só um instante...")
 
-    async with httpx.AsyncClient() as client:
+    headers = obter_headers(vaga_id, candidato_id)
+
+    async with httpx.AsyncClient(headers=headers) as client:
         try:
             caminho_perguntas_API = f"{API_BASE_URL}/job-posting/{vaga_id}/interview/questions"
             response = await client.get(
@@ -136,7 +167,9 @@ async def processar_resposta(update: Update, context: ContextTypes.DEFAULT_TYPE)
         "respostas": context.user_data["respostas"]
     }
 
-    async with httpx.AsyncClient() as client:
+    headers = obter_headers(vaga_id, candidato_id)
+
+    async with httpx.AsyncClient(headers=headers) as client:
         try:
             caminho_das_resposta = f"{API_BASE_URL}/job-posting/{vaga_id}/interview/answers"
             response = await client.post(
