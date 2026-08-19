@@ -3,6 +3,8 @@ import os
 import httpx
 import jwt
 import datetime
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -28,6 +30,24 @@ VERIFICADOR_SECRETO = os.getenv("JWT_SECRET")
 
 
 AGUARDANDO_CONFIRMACAO, EM_ENTREVISTA = range(2)
+
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+    def log_message(self, format, *args):
+        pass
+
+def iniciar_servidor_healthcheck():
+    porta = int(os.getenv("PORT", "8080"))
+    server = HTTPServer(("0.0.0.0", porta), HealthCheckHandler)
+    logging.info(f"Healthcheck ativo na porta {porta}")
+    server.serve_forever()
+
 
 
 def gerar_jwt() -> str:
@@ -218,6 +238,11 @@ async def cancelar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 def main():
+
+    
+    thread_healthcheck = threading.Thread(target=iniciar_servidor_healthcheck, daemon=True)
+    thread_healthcheck.start()
+
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     conv_handler = ConversationHandler(
