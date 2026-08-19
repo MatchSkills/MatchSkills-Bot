@@ -102,7 +102,7 @@ async def iniciar_e_pedir_primeira_pergunta(message, context: ContextTypes.DEFAU
 
     await message.reply_text("Carregando suas perguntas, só um instante...")
 
-    headers = obter_headers(vaga_id, candidato_id)
+    headers = obter_headers()
 
     async with httpx.AsyncClient(headers=headers) as client:
         try:
@@ -172,7 +172,7 @@ async def processar_resposta(update: Update, context: ContextTypes.DEFAULT_TYPE)
         "respostas": context.user_data["respostas"]
     }
 
-    headers = obter_headers(vaga_id, candidato_id)
+    headers = obter_headers()
 
     async with httpx.AsyncClient(headers=headers) as client:
         try:
