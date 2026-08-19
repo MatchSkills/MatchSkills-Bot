@@ -53,30 +53,26 @@ def obter_headers() -> dict:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     args = context.args
-    if args:
-        vaga_id = args[0]
+    if args and "_" in args[0]:
+        candidatura_id, vaga_id = args[0].split("_")
+        context.user_data["candidatura_id"] = candidatura_id
         context.user_data["vaga_id"] = vaga_id
+    elif args:
+        # Fallback se passar só um ID
+        context.user_data["candidatura_id"] = args[0]
+        context.user_data["vaga_id"] = args[0]
     else:
-        await update.message.reply_text("Por favor, informe o ID da vaga para iniciar.")
+        await update.message.reply_text("Por favor, acesse o bot usando o link do seu processo seletivo.")
         return ConversationHandler.END
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Sim", callback_data="SIM"),
-            InlineKeyboardButton("Não", callback_data="NAO"),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
+    keyboard = [[InlineKeyboardButton("Sim", callback_data="SIM"), InlineKeyboardButton("Não", callback_data="NAO")]]
     await update.message.reply_text(
-        f"Olá! Identificamos sua candidatura para a vaga `{vaga_id}`.\n\n"
+        f"Olá! Identificamos sua candidatura `{context.user_data['candidatura_id']}` para a vaga `{context.user_data['vaga_id']}`.\n\n"
         "Você quer começar a entrevista agora?",
-        reply_markup=reply_markup,
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown",
     )
-
     return AGUARDANDO_CONFIRMACAO
-
 
 async def tratar_decisao(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -181,8 +177,10 @@ async def processar_resposta(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except (ValueError, TypeError):
         vaga_id_num = 0
     
+    candidatura_id = context.user_data.get("candidatura_id", 0)
+
     payload_final = {
-        "jobApplicationId": int(candidato_id),
+        "jobApplicationId": int(candidatura_id),
         "jobPostingId": vaga_id_num,
         "questionsAndAnswers": questions_and_answers
     }
