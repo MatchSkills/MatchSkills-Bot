@@ -1,7 +1,9 @@
 import logging
+import os
 import httpx
 import jwt
 import datetime
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -13,35 +15,38 @@ from telegram.ext import (
     filters,
 )
 
+load_dotenv()
+
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-TELEGRAM_TOKEN = "S3GR3D0_D3_35T4D0"
-API_BASE_URL = "http://localhost:67"# Quero ver sair SIX da manhã e só voltar SEVEN da noite capinando lote
-VERIFICADOR_SECRETO = "definitivamenteNãoÉOVerificador"
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "S3GR3D0_D3_35T4D0")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:67")# Quero ver sair SIX da manhã e só voltar SEVEN da noite capinando lote
+VERIFICADOR_SECRETO = os.getenv("JWT_SECRET")
 
 
 AGUARDANDO_CONFIRMACAO, EM_ENTREVISTA = range(2)
 
 
-def gerar_jwt(vaga_id: str, candidato_id: str) -> str:
+def gerar_jwt() -> str:
     """Vou tentar gerar um JWT assinado no proprio bot, 
     com um tempo limite pra n virar bagunça"""
+    agora = datetime.datetime.now(datetime.timezone.utc)
     payload = {
-        "iss": "MatchSkillsAmigoBot",
-        "vaga_id": str(vaga_id),
-        "candidato_id": str(candidato_id),
-        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
+        "sub": "bot-service",
+        "role": "SYSTEM",
+        "iat": agora,
+        "exp": agora + datetime.timedelta(seconds=30) 
     }
     return jwt.encode(payload, VERIFICADOR_SECRETO, algorithm="HS256")
 
-def obter_headers(vaga_id: str, candidato_id: str) -> dict:
+def obter_headers() -> dict:
     """Monta os cabeçalhos"""
-    token = gerar_jwt(vaga_id, candidato_id)
+    token = gerar_jwt()
     return {
-        "Authorization": f"Bearer {token}",
+        "X-Internal-Token": token,
         "Content-Type": "application/json"
     }
 
